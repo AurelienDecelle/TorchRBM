@@ -2,8 +2,8 @@
 
 import sys
 import os
-if os.getenv('RBM_TORCH') != None:
-    os.chdir(os.getenv('RBM_TORCH'))
+if os.getenv('TORCHRBM') != None:
+    os.chdir(os.getenv('TORCHRBM'))
 sys.path.append(os.getcwd() + '/src')
 import torch
 from pathlib import Path
@@ -18,11 +18,9 @@ torch.set_float32_matmul_precision("high")
 # import command-line input arguments
 def create_parser():
     parser = argparse.ArgumentParser(description='Train an RBM model.')
-    parser.add_argument('-d', '--data',         type=Path,  required=True,          help='Filename of the dataset to be used for training the model.')
+    parser.add_argument("-d", "--data",         type=Path,  required=True,          help='Filename of the dataset to be used for training the model.')
     parser.add_argument("-c", "--clustering",   type=Path,  default=None,           help="(Defaults to None). Path to the mmseqs tsv file that contains the clustering of the dataset.")
-    parser.add_argument("-o", '--filename',           type=Path,  default='RBM.h5',       help='(Defaults to RBM.h5). Path to the file where to save the model.')
-    parser.add_argument('--model',              type=str,   default="BernoulliBernoulliRBM",   help="(Defaults to BernoulliBernoulliRBM). Type of model to be trained.",
-                        choices=["BernoulliBernoulliRBM", "PottsBernoulliRBM", "PottsBernoulliRBM_opt"])
+    parser.add_argument("-o", '--filename',     type=Path,  default='RBM.h5',       help='(Defaults to RBM.h5). Path to the file where to save the model.')
     parser.add_argument('--n_save',             type=int,   default=50,             help='(Defaults to 50). Number of models to save during the training.')
     parser.add_argument('--training_mode',      type=str,   default='PCD',          help='(Defaults to PCD). How to perform the training.', choices=['PCD', 'CD', 'Rdm'])
     parser.add_argument('--epochs',             type=int,   default=100,            help='(Defaults to 100). Number of epochs.')
@@ -53,9 +51,12 @@ def get_checkpoints(args):
 if __name__ == '__main__':
         parser = create_parser()
         args = parser.parse_args()
-        Rbm = importlib.import_module("RBMs." + args.model)
         checkpoints = get_checkpoints(args)
         training_dataset = DatasetRBM(path_data=args.data, path_clu=args.clustering)
+        if training_dataset.get_num_states() > 2:
+            Rbm = importlib.import_module("RBMs.PottsBernoulliRBM")
+        else:
+            Rbm = importlib.import_module("RBMs.BernoulliBernoulliRBM")
         if args.batch_size > training_dataset.__len__():
             print(f"Warning: batch_size ({args.batch_size}) is bigger than the size of the training set ({training_dataset.__len__()}). Setting batch_size to {training_dataset.__len__()}.")
             args.batch_size = training_dataset.__len__()

@@ -17,14 +17,16 @@ To train a model enter:
 ```bash
 python3 src/train.py --data <path_to_data> --filename <output_path> --model <model_type>
 ```
-Where the input data file can be in fasta format or plain text and `model_type` should be one of the possible models:
+Where the input data file can be in fasta format or plain text. The available RBM models are:
 
 - BernoulliBernoulliRBM
 - PottsBernoulliRBM
 
+If the training data are binary variables, the model *BernoulliBernoulliRBM* is used. If they are categorical (`num_states` > 2), *PottsBernoulliRBM* is used.
+
 To restore an interrupted training, enter:
 ```bash
-python3 src/train.py --data <path_to_data> --filename <model_path> --model <model_type> --epochs <new_epochs_number> --restore
+python3 src/train.py --data <path_to_data> --filename <model_path> --epochs <new_epochs_number> --restore
 ```
 where `model_path` is the path to an existing RBM model and `new_epochs_number` must be larger than the previous number of training epochs.
 
@@ -39,7 +41,6 @@ python3 src/train.py -h
 mmseqs easy-cluster --min-seq-id 0.8 "<input_MSA>" "<prefix>" "<prefix_temp>"
 ```
 - `-o, --filename`: (Optional, defaults to *RBM.h5*) Name of the file where to store the model;
-- `--model`: (Optional, defaults to *BernoulliBernoulliRBM*) Type of model to use for the training. The possible options are: *BernoulliBernoulliRBM*, *PottsBernoulliRBM*;
 - `--n_save`: (Optional, defaults to 50) Number of models to save along the training;
 - `--training_mode`: (Optional, defaults to *PCD*) Training protocol. The possible options are: *CD*, *PCD*, *Rdm*;
 - `--epochs`: (Optional, defaults to 100) Number of training epochs;
