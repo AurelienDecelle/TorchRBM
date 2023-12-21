@@ -15,7 +15,7 @@ export TORCHRBM=/path_to_repository/TorchRBM
 ## Training
 To train a model enter:
 ```bash
-python3 src/train.py --data <path_to_data> --filename <output_path> --model <model_type>
+python3 src/train.py --data <path_to_data> --filename <output_path>
 ```
 Where the input data file can be in fasta format or plain text. The available RBM models are:
 
