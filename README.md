@@ -9,7 +9,7 @@ Basic implementation in Pytorch of the Restricted Boltzmann Machine with binary 
 ## Installation
 Set up the environment variables by adding to the .bashrc file the following line (use your path to this repository)
 ```bash
-export RBM_TORCH=/path_to_repository/RBM-Torch
+export TORCHRBM=/path_to_repository/TorchRBM
 ```
 
 ## Training
