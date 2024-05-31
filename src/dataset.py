@@ -4,60 +4,37 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 import torch
-
-def sequence_to_numeric(string : str) -> list:
-    amino_letters = 'ACDEFGHIKLMNPQRSTVWY-'
-    letter_map = {l : n for l, n in zip(amino_letters, range(21))}
-    n_list = []
-    for l in string:
-        n_list.append(letter_map[l])
-    return n_list
-
-def import_from_fasta(fasta_name : Union[str, Path]) -> List[list]:
-    sequences = []
-    names = []
-    seq = ''
-    with open(fasta_name, 'r') as f:
-        first_line = f.readline()
-        if not first_line.startswith('>'):
-            raise RuntimeError(f"The file {fasta_name} is not in a fasta format.")
-        f.seek(0)
-        for line in f:
-            if not line.strip():
-                continue
-            if line.startswith('>'):
-                if seq:
-                    sequences.append(seq)
-                header = line[1:].strip().replace(' ', '_')
-                names.append(header)
-                seq = ''
-            else:
-                seq += line.strip()
-    if seq:
-        sequences.append(seq)
-    
-    return names, sequences
+import utils
 
 class DatasetRBM(Dataset):
     def __init__(self,
                  path_data : Union[str, Path],
-                 path_clu : Union[str, Path]=None):
+                 alphabet : str="protein",
+                 compute_weights : bool=False,
+                 th : float=0.8):
         """Initialize the dataset.
 
         Args:
             path_data (Union[str, Path]): Path to the file (plain text or fasta).
-            path_clu (Union[str, Path], optional): Path to the mmseqs tsv file that contains the clustering of the dataset.
+            alphabet (str, optional): Selects the type of encoding of the sequences. Default choices are ("protein", "rna", "dna"). Defaults to "protein".
+            compute_weights (bool, optional): Whether to assign weights to the imput data. The weight of each data is 1 / n_clust, where 'n_clust' is the number of sequences
+                                              that have a sequence identity with 's' >= th. Defaults to False.
+            th (float, optional) : Sequence identity threshold for computing the weights of the sequences. Defaults to 0.8.
         """
         self.names = []
         self.data = []
+        self.tokens = None # Only needed for protein sequence data
         
         # Automatically detects if the file is in fasta format and imports the data
         with open(path_data, "r") as f:
             first_line = f.readline()
         if first_line.startswith(">"):
-            names, sequences = import_from_fasta(path_data)
+            # Select the proper encoding
+            self.tokens = utils.get_tokens(alphabet)
+            names, sequences = utils.import_from_fasta(path_data)
+            utils.validate_alphabet(sequences=sequences, tokens=self.tokens)
             self.names = np.array(names)
-            self.data = np.array(list(map(sequence_to_numeric, sequences)), dtype=np.int64)
+            self.data = np.vectorize(utils.encode_sequence, excluded=["tokens"], signature="(), () -> (n)")(sequences, self.tokens)
         else:
             with open(path_data, "r") as f:
                 for line in f:
@@ -67,30 +44,23 @@ class DatasetRBM(Dataset):
         num_data = len(self.data)
         
         # Computes the weights to be assigned to the data
-        if path_clu is None:
-            self.weights = np.ones((num_data, 1), dtype=np.float32)
+        if compute_weights:
+            print("Automatically computing the sequence weights...")
+            self.weights = utils.compute_weights(data=self.data, th=th)
         else:
-            c1, c2 = [], []
-            with open(path_clu, "r") as f:
-                for line in f:
-                    n1, n2 = line.strip().split("\t")
-                    c1.append(n1)
-                    c2.append(n2)
-            c1 = np.array(c1)
-            c2 = np.array(c2)
-
-            _, clu_inverse, clu_counts = np.unique(c1, return_counts=True, return_inverse=True)
-            seq_counts = clu_counts[clu_inverse]
-            seq_weights = 1 / seq_counts
-            seq2weight = {seq : w for seq, w in zip(c2, seq_weights)}
-            self.weights = np.array([[seq2weight[seq]] for seq in self.names], dtype=np.float32)
+            self.weights = np.ones((num_data, 1), dtype=np.float32)
         
         # Shuffle the data
         perm = np.random.permutation(num_data)
         self.data = self.data[perm]
         self.names = self.names[perm]
-        if path_clu is not None:
-            self.weights = self.weights[perm]
+        self.weights = self.weights[perm]
+        
+        # Binary or categorical dataset?
+        if self.get_num_states() == 2:
+            self.is_binary = True
+        else:
+            self.is_binary = False
 
     def __len__(self):
         return len(self.data)
