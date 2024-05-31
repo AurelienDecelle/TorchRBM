@@ -232,9 +232,8 @@ def fit(dataset : Dataset,
     checkpoints = list(checkpoints)
     
     # Create file for saving the model
-    timestamp = str('.'.join(list(str(time.localtime()[i]) for i in range(5))))
     filename = Path(filename)
-    filename = filename.parent / Path(f"{timestamp}-{filename.name}")
+    filename = filename.parent / Path(filename.name)
     file_model = File(filename, "w")
     hyperparameters = file_model.create_group("hyperparameters")
     hyperparameters["epochs"] = epochs
@@ -255,8 +254,9 @@ def fit(dataset : Dataset,
     pbar = tqdm(initial=0, total=epochs, colour="red", dynamic_ncols=True, ascii="-#")
     pbar.set_description("Training RBM")
     num_updates = 0
-    for epoch in range(epochs + 1):
+    while num_updates < epochs:
         for batch in dataloader:
+            num_updates += 1
             batch = (batch[0].to(device), batch[1].to(device))
             if training_mode == "Rdm":
                 parallel_chains = init_parallel_chains(num_chains=num_chains, num_visibles=num_visibles, num_hiddens=num_hiddens, device=device)
@@ -265,14 +265,13 @@ def fit(dataset : Dataset,
                 _, h = sample_hiddens(parallel_chains_v, hbias, weight_matrix)
                 parallel_chains = (parallel_chains_v, h)
             parallel_chains, params = fit_batch(batch=batch, parallel_chains=parallel_chains, params=params, gibbs_steps=gibbs_steps, learning_rate=learning_rate)
-            num_updates += 1
+            pbar.update(1)
             
         # Save the model if a checkpoint is reached
-        if epoch in checkpoints:
+        if num_updates in checkpoints:
             vbias, hbias, weight_matrix = params
             file_model = File(filename, "r+")
-            checkpoint = file_model.create_group(f"epoch_{epoch}")
-            checkpoint["gradient_updates"] = num_updates
+            checkpoint = file_model.create_group(f"epoch_{num_updates}")
             checkpoint["vbias"] = vbias.cpu().numpy()
             checkpoint["hbias"] = hbias.cpu().numpy()
             checkpoint["weight_matrix"] = weight_matrix.cpu().numpy()
@@ -285,7 +284,7 @@ def fit(dataset : Dataset,
             del file_model["parallel_chains"]
             file_model["parallel_chains"] = parallel_chains[0].cpu().numpy()
             file_model.close()
-        pbar.update(1)
+       
  
 def restore_training(filename : str,
                      dataset : Dataset,
@@ -331,7 +330,6 @@ def restore_training(filename : str,
     weight_matrix = torch.tensor(file_model[last_file_key]["weight_matrix"][()], device=device)
     vbias = torch.tensor(file_model[last_file_key]["vbias"][()], device=device)
     hbias = torch.tensor(file_model[last_file_key]["hbias"][()], device=device)
-    num_updates = int(file_model[last_file_key]["gradient_updates"][()])
     parallel_chains_v = torch.tensor(file_model["parallel_chains"][()], device=device)
     batch_size = int(file_model["hyperparameters"]["batch_size"][()])
     gibbs_steps = int(file_model["hyperparameters"]["gibbs_steps"][()])
@@ -339,6 +337,7 @@ def restore_training(filename : str,
     training_mode = file_model["hyperparameters"]["training_mode"][()].decode('utf-8')
     num_chains = int(file_model["hyperparameters"]["num_chains"][()])
     num_hiddens = int(file_model["hyperparameters"]["num_hiddens"][()])
+    num_updates = num_epochs
     file_model.close()
     
     # Initialize the chains, import the data
@@ -356,8 +355,9 @@ def restore_training(filename : str,
     # Continue the training
     pbar = tqdm(initial=num_epochs, total=epochs, colour="red", dynamic_ncols=True, ascii="-#")
     pbar.set_description("Training RBM")
-    for epoch in range(num_epochs + 1, epochs + 1):
+    while num_updates < epochs:
         for batch in dataloader:
+            num_updates += 1
             batch = (batch[0].to(device), batch[1].to(device))
             if training_mode == "Rdm":
                 parallel_chains = init_parallel_chains(num_chains=num_chains, num_visibles=num_visibles, num_hiddens=num_hiddens, device=device)
@@ -366,14 +366,13 @@ def restore_training(filename : str,
                 _, h = sample_hiddens(parallel_chains_v, hbias, weight_matrix)
                 parallel_chains = (parallel_chains_v, h)
             parallel_chains, params = fit_batch(batch=batch, parallel_chains=parallel_chains, params=params, gibbs_steps=gibbs_steps, learning_rate=learning_rate)
-            num_updates += 1
+            pbar.update(1)
             
         # Save the model if a checkpoint is reached
-        if epoch in checkpoints:
+        if num_updates in checkpoints:
             vbias, hbias, weight_matrix = params
             file_model = File(filename, 'r+')
-            checkpoint = file_model.create_group(f"epoch_{epoch}")
-            checkpoint["gradient_updates"] = num_updates
+            checkpoint = file_model.create_group(f"epoch_{num_updates}")
             checkpoint["vbias"] = vbias.cpu().numpy()
             checkpoint["hbias"] = hbias.cpu().numpy()
             checkpoint["weight_matrix"] = weight_matrix.cpu().numpy()
@@ -385,8 +384,7 @@ def restore_training(filename : str,
             checkpoint['numpy_rng_arg4'] = np.random.get_state()[4]
             del file_model["parallel_chains"]
             file_model["parallel_chains"] = parallel_chains[0].cpu().numpy()
-            file_model.close()
-        pbar.update(1)
+            file_model.close()    
     
     file_model = File(filename, 'r+')
     del file_model["hyperparameters"]["epochs"]

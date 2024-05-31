@@ -19,16 +19,17 @@ torch.set_float32_matmul_precision("high")
 def create_parser():
     parser = argparse.ArgumentParser(description='Train an RBM model.')
     parser.add_argument("-d", "--data",         type=Path,  required=True,          help='Filename of the dataset to be used for training the model.')
-    parser.add_argument("-c", "--clustering",   type=Path,  default=None,           help="(Defaults to None). Path to the mmseqs tsv file that contains the clustering of the dataset.")
+    parser.add_argument("-w", "--weights",                  default=False,          help="(Defaults to False). Whether to put a weights on the sequences based on the sequence identity with the neighbors.", action="store_true")
     parser.add_argument("-o", '--filename',     type=Path,  default='RBM.h5',       help='(Defaults to RBM.h5). Path to the file where to save the model.')
+    parser.add_argument("-H", '--num_hiddens',  type=int,   default=100,            help='(Defaults to 100). Number of hidden units.')
     parser.add_argument('--n_save',             type=int,   default=50,             help='(Defaults to 50). Number of models to save during the training.')
     parser.add_argument('--training_mode',      type=str,   default='PCD',          help='(Defaults to PCD). How to perform the training.', choices=['PCD', 'CD', 'Rdm'])
-    parser.add_argument('--epochs',             type=int,   default=100,            help='(Defaults to 100). Number of epochs.')
-    parser.add_argument('--num_hiddens',        type=int,   default=100,            help='(Defaults to 100). Number of hidden units.')
+    parser.add_argument('--epochs',             type=int,   default=10000,          help='(Defaults to 10000). Number of epochs.')
     parser.add_argument('--learning_rate',      type=float, default=0.01,           help='(Defaults to 0.01). Learning rate.')
     parser.add_argument('--gibbs_steps',        type=int,   default=10,             help='(Defaults to 10). Number of Gibbs steps for each gradient estimation.')
     parser.add_argument('--batch_size',         type=int,   default=1000,           help='(Defaults to 1000). Minibatch size.')
     parser.add_argument('--num_chains',         type=int,   default=1000,           help='(Defaults to 1000). Number of parallel chains.')
+    parser.add_argument("--alphabet",           type=str,   default="protein",      help="(Defaults to protein). Type of encoding for the sequences. Choose among ['protein', 'rna', 'dna'] or a user-defined string of tokens.")
     parser.add_argument('--restore',                        default=False,          help='(Defaults to False) To restore an old training.', action='store_true')
     parser.add_argument('--spacing',            type=str,   default='exp',          help='(Defaults to exp). Spacing to save models.', choices=['exp', 'linear'])
     parser.add_argument('--seed',               type=int,   default=0,              help='(Defaults to 0). Random seed.')
@@ -52,11 +53,11 @@ if __name__ == '__main__':
         parser = create_parser()
         args = parser.parse_args()
         checkpoints = get_checkpoints(args)
-        training_dataset = DatasetRBM(path_data=args.data, path_clu=args.clustering)
-        if training_dataset.get_num_states() > 2:
-            Rbm = importlib.import_module("RBMs.PottsBernoulliRBM")
-        else:
+        training_dataset = DatasetRBM(path_data=args.data, alphabet=args.alphabet, compute_weights=args.weights)
+        if training_dataset.is_binary:
             Rbm = importlib.import_module("RBMs.BernoulliBernoulliRBM")
+        else:
+            Rbm = importlib.import_module("RBMs.PottsBernoulliRBM")
         if args.batch_size > training_dataset.__len__():
             print(f"Warning: batch_size ({args.batch_size}) is bigger than the size of the training set ({training_dataset.__len__()}). Setting batch_size to {training_dataset.__len__()}.")
             args.batch_size = training_dataset.__len__()
