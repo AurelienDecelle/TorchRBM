@@ -289,23 +289,23 @@ def fit(dataset : Dataset,
             parallel_chains, params = fit_batch(batch=batch, parallel_chains=parallel_chains, params=params, gibbs_steps=gibbs_steps, learning_rate=learning_rate)
             pbar.update(1)
             
-        # Save the model if a checkpoint is reached
-        if num_updates in checkpoints:
-            vbias, hbias, weight_matrix = params
-            file_model = File(filename, "r+")
-            checkpoint = file_model.create_group(f"epoch_{num_updates}")
-            checkpoint["vbias"] = vbias.cpu().numpy()
-            checkpoint["hbias"] = hbias.cpu().numpy()
-            checkpoint["weight_matrix"] = weight_matrix.cpu().numpy()
-            checkpoint['torch_rng_state'] = torch.get_rng_state()
-            checkpoint['numpy_rng_arg0'] = np.random.get_state()[0]
-            checkpoint['numpy_rng_arg1'] = np.random.get_state()[1]
-            checkpoint['numpy_rng_arg2'] = np.random.get_state()[2]
-            checkpoint['numpy_rng_arg3'] = np.random.get_state()[3]
-            checkpoint['numpy_rng_arg4'] = np.random.get_state()[4]
-            del file_model["parallel_chains"]
-            file_model["parallel_chains"] = parallel_chains[0].cpu().numpy()
-            file_model.close()
+            # Save the model if a checkpoint is reached
+            if num_updates in checkpoints:
+                vbias, hbias, weight_matrix = params
+                file_model = File(filename, "r+")
+                checkpoint = file_model.create_group(f"epoch_{num_updates}")
+                checkpoint["vbias"] = vbias.cpu().numpy()
+                checkpoint["hbias"] = hbias.cpu().numpy()
+                checkpoint["weight_matrix"] = weight_matrix.cpu().numpy()
+                checkpoint['torch_rng_state'] = torch.get_rng_state()
+                checkpoint['numpy_rng_arg0'] = np.random.get_state()[0]
+                checkpoint['numpy_rng_arg1'] = np.random.get_state()[1]
+                checkpoint['numpy_rng_arg2'] = np.random.get_state()[2]
+                checkpoint['numpy_rng_arg3'] = np.random.get_state()[3]
+                checkpoint['numpy_rng_arg4'] = np.random.get_state()[4]
+                del file_model["parallel_chains"]
+                file_model["parallel_chains"] = parallel_chains[0].cpu().numpy()
+                file_model.close()
        
  
 def restore_training(filename : str,
