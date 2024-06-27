@@ -39,7 +39,7 @@ where `model_path` is the path to an existing RBM model and `new_number updates`
 ### Training Options
 All the available options can be visualized by entering
 ```bash
-python torchrbm/train_rbm.py -h
+python rbm/train_rbm.py -h
 ```
 - `-d, --data`: Path to the dataset to be used for training the model;
 - `-w`, `--weights`: (Optional, defaults to *False*) Whether to put weights on the sequences based on the sequence identity with the neighbors;
