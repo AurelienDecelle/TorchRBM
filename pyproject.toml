@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "torchrbm"
+name = "rbm"
 version = "0.0.1"
 authors = [
   { name="Lorenzo Rosset", email="rosset.lorenzo@gmail.com"},
