@@ -15,11 +15,11 @@ pip install -e .
 ## Training
 To train a model enter:
 ```bash
-python torchrbm/train_rbm.py --data <path_to_data> --filename <output_path>
+python rbm/train_rbm.py --data <path_to_data> --filename <output_path>
 ```
 The input data variables can be both in binary format or categorical (Potts).
 - For the binary format, the input file is expected to be a text file in which each row represents one data point and it is a sequence of 0 or 1 separated by a space character;
-- For the categorical varaibles, the input file must be in `fasta` format, where headers (identified by the `>` character) are alternated with sequences of symbols. For instance:
+- For the categorical variables, the input file must be in `fasta` format, where headers (identified by the `>` character) are alternated with sequences of symbols. For instance:
 
     ```
     >sequence_1
@@ -32,7 +32,7 @@ The input data variables can be both in binary format or categorical (Potts).
 
 To restore an interrupted training, enter:
 ```bash
-python torchrbm/train_rbm.py --data <path_to_data> --filename <model_path> --num_updates <new_number_updates> --restore
+python rbm/train_rbm.py --data <path_to_data> --filename <model_path> --num_updates <new_number_updates> --restore
 ```
 where `model_path` is the path to an existing RBM model and `new_number updates` must be larger than the previous number of gradient updates.
 
@@ -42,7 +42,7 @@ All the available options can be visualized by entering
 python torchrbm/train_rbm.py -h
 ```
 - `-d, --data`: Path to the dataset to be used for training the model;
-- `-w`, `--weights`: (Optional, defaults to *False*) Whether to put a weights on the sequences based on the sequence identity with the neighbors;
+- `-w`, `--weights`: (Optional, defaults to *False*) Whether to put weights on the sequences based on the sequence identity with the neighbors;
 - `-o, --filename`: (Optional, defaults to *RBM.h5*) Name of the file where to store the model;
 - `-H`, `--num_hiddens`: (Optional, defaults to 100) Number of latent variables;
 - `--n_save`: (Optional, defaults to 50) Number of models to save along the training;
