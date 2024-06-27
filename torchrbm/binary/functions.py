@@ -1,21 +1,19 @@
 import torch
 from typing import Dict
 
-from torchrbm.custom_fn import one_hot
-from torchrbm.potts.sampling import sample_hiddens, sample_visibles
+from torchrbm.binary.sampling import sample_hiddens, sample_visibles
 
 def init_chains(
     num_chains : int,
     num_visibles : int,
     num_hiddens : int,
-    num_colors : int,
     device : torch.device
 ) -> Dict[str, torch.Tensor]:
     
     chains = {}
-    chains["v"] = torch.randint(0, num_colors, size=(num_chains, num_visibles), device=device, dtype=torch.int32)
+    chains["v"] = torch.randint(0, 2, size=(num_chains, num_visibles), device=device, dtype=torch.float32)
     chains["h"] = torch.randint(0, 2, size=(num_chains, num_hiddens), device=device, dtype=torch.float32)
-    chains["mv"] = torch.zeros(size=(num_chains, num_visibles, num_colors), device=device, dtype=torch.float32)
+    chains["mv"] = torch.zeros(size=(num_chains, num_visibles), device=device, dtype=torch.float32)
     chains["mh"] = torch.zeros(size=(num_chains, num_hiddens), device=device, dtype=torch.float32)
     return chains
 
@@ -29,15 +27,13 @@ def init_parameters(
     eps = 1e-4
     init_std = 1e-4
     num_visibles = data.shape[1]
-    num_colors = torch.max(data) + 1
-    dataset_oh = one_hot(data, num_classes=num_colors).to(device)
-    frequencies = dataset_oh.mean(0)
+    frequencies = data.to(device).mean(0)
     frequencies = torch.clamp(frequencies, min=eps, max=(1. - eps))
 
     params = {}
-    params["vbias"] = torch.log(frequencies) - 1. / num_colors * torch.sum(torch.log(frequencies), 0)
+    params["vbias"] = torch.log(frequencies) - torch.log(1. - frequencies)
     params["hbias"] = torch.zeros(num_hiddens, device=device, dtype=torch.float32)
-    params["weight_matrix"] = torch.randn(size=(num_visibles, num_colors, num_hiddens), device=device) * init_std
+    params["weight_matrix"] = torch.randn(size=(num_visibles, num_hiddens), device=device) * init_std
     return params
 
 
@@ -55,12 +51,8 @@ def compute_energy(
     Returns:
         torch.Tensor: Energies of the data points.
     """
-    num_visibles, num_states, num_hiddens = params["weight_matrix"].shape
-    v_oh = one_hot(chains["v"], num_classes=num_states).reshape(-1, num_visibles * num_states)
-    vbias_oh = params["vbias"].flatten()
-    weight_matrix_oh = params["weight_matrix"].reshape(num_visibles * num_states, num_hiddens)
-    fields = (v_oh @ vbias_oh) + (chains["h"] @ params["hbias"])
-    interaction = ((v_oh @ weight_matrix_oh) * chains["h"]).sum(1)
+    fields = (chains["v"] @ params["vbias"]) + (chains["h"] @ params["hbias"])
+    interaction = ((chains["v"] @ params["weight_matrix"]) * chains["h"]).sum(1)
     return - fields - interaction
 
 @torch.jit.script
@@ -77,12 +69,9 @@ def compute_energy_visibles(
     Returns:
         torch.Tensor: Energies of the visible data points.
     """
-    num_visibles, num_states, num_hiddens = params["weight_matrix"].shape
-    v_oh = one_hot(chains["v"], num_classes=num_states).reshape(-1, num_visibles * num_states)
-    vbias_oh = params["vbias"].flatten()
-    weight_matrix_oh = params["weight_matrix"].reshape(num_visibles * num_states, num_hiddens)
-    field = v_oh @ vbias_oh
-    exponent = params["hbias"] + (v_oh @ weight_matrix_oh)
+    
+    field = chains["v"] @ params["vbias"]
+    exponent = params["hbias"] + (chains["v"] @ params["weight_matrix"])
     log_term = torch.where(exponent < 10, torch.log(1. + torch.exp(exponent)), exponent)
     return - field - log_term.sum(1)
 
@@ -105,25 +94,26 @@ def compute_partition_function_ais(
         float: Estimate of the log-partition function.
     """
 
-    num_visibles, num_states, num_hiddens = params["weight_matrix"].shape
+    num_visibles, num_hiddens = params["weight_matrix"].shape
     E = torch.zeros(num_chains, device=device, dtype=torch.float64)
     beta_list = torch.linspace(0.0, 1.0, num_beta)
     dB = 1.0 / num_beta
 
     # initialize the chains
+    vbias0 = torch.zeros(size=(num_visibles,), device=device)
     hbias0 = torch.zeros(size=(num_hiddens,), device=device)
     energy0 = torch.zeros(num_chains, device=device, dtype=torch.float64)
-    v = torch.randint(0, num_states, size=(1, num_visibles), device=device).repeat(num_chains, 1)
+    v = torch.bernoulli(torch.sigmoid(vbias0)).repeat(num_chains, 1)
     chains = {"v" : v}
     chains["mh"] = torch.sigmoid(hbias0).repeat(num_chains, 1)
-    chains["h"] = torch.bernoulli(chains["mh"])
+    chains["h"] = torch.bernoulli(chains["mv"])
 
     energy1 = compute_energy(chains, params)
     E += energy1 - energy0
     for beta in beta_list:
         chains = sample_hiddens(chains=chains, params=params, beta=beta)
         chains = sample_visibles(chains=chains, params=params, beta=beta)
-        E += compute_energy(chains, params)
+        E += compute_energy(chains, params).type(torch.float64)
 
     # Subtract the average for avoiding overflow
     W = -dB * E

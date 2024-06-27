@@ -1,8 +1,8 @@
 from typing import Dict, Tuple
 import torch
 
-from torchrbm.potts.grad import compute_gradient
-from torchrbm.potts.sampling import sample_hiddens, sample_state
+from torchrbm.binary.grad import compute_gradient
+from torchrbm.binary.sampling import sample_hiddens, sample_state
 
 
 def update_parameters(
@@ -24,17 +24,14 @@ def update_parameters(
     Returns:
         Dict[str, torch.Tensor]: Updated parameters.
     """
-    num_colors = params["weight_matrix"].shape[1]
     # Compute the gradient of the log-likelihood
-    grad = compute_gradient(data=data, chains=chains, num_colors=num_colors, centered=centered)
+    grad = compute_gradient(data=data, chains=chains, centered=centered)
     
     # Update the parameters
     params["vbias"] += lr * grad["vbias"]
     params["hbias"] += lr * grad["hbias"]
     params["weight_matrix"] += lr * grad["weight_matrix"]
     
-    # Zero-sum gauge
-    params["weight_matrix"] -= params["weight_matrix"].mean(1, keepdim=True)
     return params
 
 @torch.jit.script

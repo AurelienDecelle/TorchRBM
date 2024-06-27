@@ -21,6 +21,7 @@ class DatasetRBM(Dataset):
             compute_weights (bool, optional): Whether to assign weights to the imput data. The weight of each data is 1 / n_clust, where 'n_clust' is the number of sequences
                                               that have a sequence identity with 's' >= th. Defaults to False.
             th (float, optional) : Sequence identity threshold for computing the weights of the sequences. Defaults to 0.8.
+            device (torch.device, optional): Device.
         """
         self.names = []
         self.data = []
@@ -38,10 +39,7 @@ class DatasetRBM(Dataset):
             self.names = np.array(names)
             self.data = np.vectorize(fasta_utils.encode_sequence, excluded=["tokens"], signature="(), () -> (n)")(sequences, self.tokens)
         else:
-            with open(path_data, "r") as f:
-                for line in f:
-                    self.data.append(line.strip().split())
-            self.data = np.array(self.data, dtype=np.float32)
+            self.data = np.loadtxt(path_data, dtype=np.float32)
             self.names = np.arange(len(self.data))
         num_data = len(self.data)
         

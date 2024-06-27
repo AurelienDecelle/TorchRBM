@@ -20,10 +20,7 @@ def sample_hiddens(
     Returns:
         Dict[str, torch.Tensor]: Updated chains.
     """
-    num_visibles, num_states, num_hiddens = params["weight_matrix"].shape
-    weight_matrix_oh = params["weight_matrix"].reshape(num_visibles * num_states, num_hiddens)
-    v_oh = one_hot(chains["v"], num_classes=num_states).reshape(-1, num_visibles * num_states)
-    chains["mh"] = torch.sigmoid(beta * (params["hbias"] + v_oh @ weight_matrix_oh))
+    chains["mh"] = torch.sigmoid(beta * (params["hbias"] + chains["v"] @ params["weight_matrix"]))
     chains["h"] = torch.bernoulli(chains["mh"])
     return chains
 
@@ -43,9 +40,8 @@ def sample_visibles(
     Returns:
         Dict[str, torch.Tensor]: Updated chains.
     """
-    num_visibles, num_states, _ = params["weight_matrix"].shape
-    chains["mv"] = torch.softmax(beta * (params["vbias"] + torch.tensordot(chains["h"], params["weight_matrix"], dims=[[1], [2]])), dim=-1)
-    chains["v"] = torch.multinomial(chains["mv"].reshape(-1, num_states), 1).reshape(-1, num_visibles)
+    chains["mv"] = torch.sigmoid(beta * (params["vbias"] + chains["h"] @ params["weight_matrix"].T))
+    chains["v"] = torch.bernoulli(chains["mv"])
     return chains
 
 

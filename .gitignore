@@ -162,8 +162,3 @@ cython_debug/
 # my folders
 data/
 models/
-src/.ipynb_checkpoints
-src/__pycache__
-src/RBMs/.ipynb_checkpoints
-src/RBMs/__pycache__
-notebooks/.ipynb_checkpoints

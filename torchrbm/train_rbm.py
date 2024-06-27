@@ -19,7 +19,7 @@ def create_parser():
     parser.add_argument("-H", '--num_hiddens',  type=int,   default=100,            help='(Defaults to 100). Number of hidden units.')
     parser.add_argument('--n_save',             type=int,   default=50,             help='(Defaults to 50). Number of models to save during the training.')
     parser.add_argument('--training_mode',      type=str,   default='PCD',          help='(Defaults to PCD). How to perform the training.', choices=['PCD', 'CD', 'Rdm'])
-    parser.add_argument('--num_updates',        type=int,   default=10000,          help='(Defaults to 10000). Number of epochs.')
+    parser.add_argument('--num_updates',        type=int,   default=1e5,            help='(Defaults to 1e5). Number of epochs.')
     parser.add_argument('--lr',                 type=float, default=0.01,           help='(Defaults to 0.01). Learning rate.')
     parser.add_argument('--gibbs_steps',        type=int,   default=10,             help='(Defaults to 10). Number of Gibbs steps for each gradient estimation.')
     parser.add_argument('--batch_size',         type=int,   default=5000,           help='(Defaults to 5000). Minibatch size.')

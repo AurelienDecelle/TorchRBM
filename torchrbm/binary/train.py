@@ -6,10 +6,10 @@ from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
 from itertools import cycle
 
-from torchrbm.potts.functions import init_chains, init_parameters
-from torchrbm.potts.pcd import fit_batch
-from torchrbm.potts.functions import init_chains, init_parameters
-from torchrbm.potts.sampling import sample_hiddens
+from torchrbm.binary.functions import init_chains, init_parameters
+from torchrbm.binary.pcd import fit_batch
+from torchrbm.binary.functions import init_chains, init_parameters
+from torchrbm.binary.sampling import sample_hiddens
 from torchrbm.io import save_checkpoint, load_model
 from torchrbm.utils import get_checkpoints
 
@@ -47,7 +47,6 @@ def train(
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True)
     dataloader = cycle(dataloader)
     num_visibles = dataset.get_num_visibles()
-    num_colors = dataset.get_num_states()
     
     # Validate checkpoints
     if checkpoints is None:
@@ -56,7 +55,7 @@ def train(
     
     # Initialize parameters and chains
     params = init_parameters(data=dataset.data, num_visibles=num_visibles, num_hiddens=num_hiddens, device=device)
-    chains = init_chains(num_chains=num_chains, num_visibles=num_visibles, num_hiddens=num_hiddens, num_colors=num_colors, device=device)
+    chains = init_chains(num_chains=num_chains, num_visibles=num_visibles, num_hiddens=num_hiddens, device=device)
     
     # Create file for saving the model
     filename = Path(filename)
@@ -91,7 +90,6 @@ def train(
                     num_chains=num_chains,
                     num_visibles=num_visibles,
                     num_hiddens=num_hiddens,
-                    num_colors=num_colors,
                     device=device
                 )
                 
@@ -147,7 +145,6 @@ def restore_training(
     dataloader = DataLoader(dataset, batch_size=hyperparams["batch_size"], shuffle=True, drop_last=True)
     dataloader = cycle(dataloader)
     num_visibles = dataset.get_num_visibles()
-    num_colors = dataset.get_num_states()
     
     # Validate checkpoints
     if checkpoints is None:
@@ -172,7 +169,6 @@ def restore_training(
                     num_chains=hyperparams["num_chains"],
                     num_visibles=num_visibles,
                     num_hiddens=hyperparams["num_hiddens"],
-                    num_colors=num_colors,
                     device=device
                 )
             

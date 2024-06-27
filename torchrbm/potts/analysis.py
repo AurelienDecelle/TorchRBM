@@ -5,12 +5,12 @@ def get_freq_single_point(data : torch.Tensor, weights : torch.Tensor, pseudo_co
     """Computes the single point frequences of the input MSA.
 
     Args:
-        data (Array): Input one-hot encoded matrix (M, L, q).
-        weights (Array): Array of weights to assign to the sequences.
+        data (torch.Tensor): Input one-hot encoded matrix (M, L, q).
+        weights (torch.Tensor): Weights to assign to the sequences.
         pseudo_count (float): Pseudo count for the single and two points statistics. Acts as a regularization.
 
     Returns:
-        Array: Array of single-point frequences (L, q).
+        torch.Tensor: Single-point frequences (L, q).
     """
     M, _, q = data.shape
     if weights is not None:
@@ -25,12 +25,12 @@ def get_freq_two_points(data : torch.Tensor, weights : torch.Tensor=None, pseudo
     """Computes the 2-points statistics of the input MSA.
 
     Args:
-        data (Array): Input one-hot encoded matrix (M, L, q).
-        weights (Array): Array of weights to assign to the sequences.
+        data (torch.Tensor): Input one-hot encoded matrix (M, L, q).
+        weights (torch.Tensor): Weights to assign to the sequences.
         pseudo_count (float): Pseudo count for the single and two points statistics. Acts as a regularization.
 
     Returns:
-        Array: Two-point frequences matrix of the MSA (L, q, L, q).
+        torch.Tensor: Two-point frequences matrix of the MSA (L, q, L, q).
     """
     M, L, q = data.shape
     data_oh = data.reshape(M, q * L)
@@ -58,13 +58,13 @@ def get_correlation_two_points(fij : torch.Tensor, pij: torch.Tensor, fi : torch
     """Computes the Pearson coefficient between the two-point frequencies of data and chains.
 
     Args:
-        fij (Array): Two-point frequencies of the data, shape=(L, q, L, q).
-        pij (Array): Two-point frequencies of the chains, shape=(L, q, L, q).
-        fi (Array): Single-point frequencies of the data, shape=(L, q).
-        pi (Array): Single-point frequencies of the chains, shape=(L, q).
+        fij (torch.Tensor): Two-point frequencies of the data, shape=(L, q, L, q).
+        pij (torch.Tensor): Two-point frequencies of the chains, shape=(L, q, L, q).
+        fi (torch.Tensor): Single-point frequencies of the data, shape=(L, q).
+        pi (torch.Tensor): Single-point frequencies of the chains, shape=(L, q).
 
     Returns:
-        Array: Pearson correlation coefficient.
+        torch.Tensor: Pearson correlation coefficient.
     """
     L, q = fij.shape[0], fij.shape[1]
     # Compute the covariance matrices

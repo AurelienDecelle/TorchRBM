@@ -57,6 +57,8 @@ def load_model(
     params["vbias"] = torch.tensor(file_model[last_file_key]["vbias"][()], device=device)
     params["hbias"] = torch.tensor(file_model[last_file_key]["hbias"][()], device=device)
     chains["v"] = torch.tensor(file_model["parallel_chains"][()], device=device)
+    # Elapsed time
+    start = np.array(file_model[last_file_key]["time"]).item()
     
     hyperparams["batch_size"] = int(file_model["hyperparameters"]["batch_size"][()])
     hyperparams["gibbs_steps"] = int(file_model["hyperparameters"]["gibbs_steps"][()])
@@ -76,20 +78,22 @@ def load_model(
         
     file_model.close()
     
-    return chains, params, hyperparams    
+    return chains, params, hyperparams, start  
 
 
 def save_checkpoint(
     fname : str,
     group_name : str,
     params : Dict[str, torch.Tensor],
-    chains : Dict[str, torch.Tensor]
+    chains : Dict[str, torch.Tensor],
+    time : int
 ):
     file_model = h5py.File(fname, 'r+')
     checkpoint = file_model.create_group(group_name)
     checkpoint["vbias"] = params["vbias"].cpu().numpy()
     checkpoint["hbias"] = params["hbias"].cpu().numpy()
     checkpoint["weight_matrix"] = params["weight_matrix"].cpu().numpy()
+    checkpoint["time"] = time
     checkpoint['torch_rng_state'] = torch.get_rng_state()
     checkpoint['numpy_rng_arg0'] = np.random.get_state()[0]
     checkpoint['numpy_rng_arg1'] = np.random.get_state()[1]
