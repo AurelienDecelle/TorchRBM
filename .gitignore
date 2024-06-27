@@ -160,5 +160,3 @@ cython_debug/
 #.idea/
 
 # my folders
-data/
-models/

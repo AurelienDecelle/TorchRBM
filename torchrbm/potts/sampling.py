@@ -4,7 +4,7 @@ import torch
 
 from torchrbm.custom_fn import one_hot
 
-
+@torch.jit.script
 def sample_hiddens(
     chains : Dict[str, torch.Tensor],
     params : Dict[str, torch.Tensor],
@@ -27,7 +27,7 @@ def sample_hiddens(
     chains["h"] = torch.bernoulli(chains["mh"])
     return chains
 
-
+@torch.jit.script
 def sample_visibles(
     chains : Dict[str, torch.Tensor],
     params : Dict[str, torch.Tensor],
@@ -49,7 +49,6 @@ def sample_visibles(
     return chains
 
 
-@torch.jit.script
 def sample_state(
     chains : Dict[str, torch.Tensor],
     params : Dict[str, torch.Tensor],

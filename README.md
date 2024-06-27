@@ -7,48 +7,55 @@ Basic implementation in Pytorch of the Restricted Boltzmann Machine with binary 
 ![Alt Text](https://raw.githubusercontent.com/AurelienDecelle/TorchRBM/main/FacesBW.gif)
 
 ## Installation
-Set up the environment variables by adding to the .bashrc file the following line (use your path to this repository)
+Install the package
 ```bash
-export TORCHRBM=/path_to_repository/TorchRBM
+pip install -e .
 ```
 
 ## Training
 To train a model enter:
 ```bash
-python3 src/train.py --data <path_to_data> --filename <output_path>
+python torchrbm/train_rbm.py --data <path_to_data> --filename <output_path>
 ```
-Where the input data file can be in fasta format or plain text. The available RBM models are:
+The input data variables can be both in binary format or categorical (Potts).
+- For the binary format, the input file is expected to be a text file in which each row represents one data point and it is a sequence of 0 or 1 separated by a space character;
+- For the categorical varaibles, the input file must be in `fasta` format, where headers (identified by the `>` character) are alternated with sequences of symbols. For instance:
 
-- BernoulliBernoulliRBM
-- PottsBernoulliRBM
+    ```
+    >sequence_1
+    -KLVIQAAPYGPEWLPGDADDLPL
+    >sequence_2 
+    -KKIILEARVNEYAPRTSNPNIPYTA
+    ```
 
-If the training data are binary variables, the model *BernoulliBernoulliRBM* is used. If they are categorical (`num_states` > 2), *PottsBernoulliRBM* is used.
+    The alphabet for the categorical variables must be specified using the `--alphabet` argument. One of the standard options `protein`, `dna` and `rna` can be chosen, or a user-defined alphabet that is coherent with the input data.
 
 To restore an interrupted training, enter:
 ```bash
-python3 src/train.py --data <path_to_data> --filename <model_path> --epochs <new_epochs_number> --restore
+python torchrbm/train_rbm.py --data <path_to_data> --filename <model_path> --num_updates <new_number_updates> --restore
 ```
-where `model_path` is the path to an existing RBM model and `new_epochs_number` must be larger than the previous number of training epochs.
+where `model_path` is the path to an existing RBM model and `new_number updates` must be larger than the previous number of gradient updates.
 
 ### Training Options
 All the available options can be visualized by entering
 ```bash
-python3 src/train.py -h
+python torchrbm/train_rbm.py -h
 ```
 - `-d, --data`: Path to the dataset to be used for training the model;
-- `-c, --clustering`: (Optional) Path to the mmseqs `.tsv` file containing the dataset's clustering. This is used with protein sequences to mitigate the sampling bias and the effect of phylogeny that correlates data samples. Each sequence is associated with a weight inversely proportional to the number of sequences within a given sequence identity (e.g. 80%). To generate the clustering file enter:
-```bash
-mmseqs easy-cluster --min-seq-id 0.8 "<input_MSA>" "<prefix>" "<prefix_temp>"
-```
+- `-w`, `--weights`: (Optional, defaults to *False*) Whether to put a weights on the sequences based on the sequence identity with the neighbors;
 - `-o, --filename`: (Optional, defaults to *RBM.h5*) Name of the file where to store the model;
+- `-H`, `--num_hiddens`: (Optional, defaults to 100) Number of latent variables;
 - `--n_save`: (Optional, defaults to 50) Number of models to save along the training;
 - `--training_mode`: (Optional, defaults to *PCD*) Training protocol. The possible options are: *CD*, *PCD*, *Rdm*;
-- `--epochs`: (Optional, defaults to 100) Number of training epochs;
-- `--num_hiddens`: (Optional, defaults to 100) Number of latent variables;
-- `--learning_rate`: (Optional, defaults to 0.01) Learning rate;
+- `--num_updates`: (Optional, defaults to 1e5) Number of gradient updates to be performed;
+- `--lr`: (Optional, defaults to 0.01) Learning rate;
 - `--gibbs_steps`: (Optional, defaults to 10) Number of chain updates performed at each gradient estimation;
-- `--batch_size`: (Optional, defaults to 1000) Minibatch size;
-- `--num_chains`: (Optional, defaults to 1000) Number of Markov Chains to run in parallel;
+- `--batch_size`: (Optional, defaults to 5000) Minibatch size;
+- `--num_chains`: (Optional, defaults to 5000) Number of Markov Chains to run in parallel;
+- `--alphabet`: (Optional, defaults to *protein*) Type of encoding for the sequences. Choose among ['protein', 'rna', 'dna'] or a user-defined string of tokens;
 - `--restore`: (Optional) Flag to be used for restarting from an old training;
 - `--spacing`: (Optional, defaults to *exp*) Type of spacing between two checkpoints where the model is stored. The possible choices are: *linear*, *exp*;
 - `--seed`: (Optional, defaults to 0) Random seed.
+
+## Analyze the model
+In the repository `notebooks` there are two examples of how to inspect the fitted RBM model and generate new data with it.
