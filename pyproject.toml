@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "torchrbm"
+version = "0.0.1"
+authors = [
+  { name="Lorenzo Rosset", email="rosset.lorenzo@gmail.com"},
+  { name="Nicolas Béreux"},
+  { name="Aurélien Decelle"},
+  { name="Beatriz Seoane"},
+]
+description = "Training and analyzing Restricted Boltzmann Machines in PyTorch"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/AurelienDecelle/TorchRBM"
+Issues = "https://github.com/AurelienDecelle/TorchRBM/issues"
