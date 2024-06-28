@@ -68,7 +68,7 @@ class DatasetRBM(Dataset):
             
         # Load the data on the device
         self.data = torch.from_numpy(self.data).to(self.device).to(self.dtype)
-        self.weights = torch.from_numpy(self.weights).to(self.device).to(self.dtype)
+        self.weights = torch.from_numpy(self.weights).to(self.device)
 
 
     def __len__(self):
