@@ -4,7 +4,7 @@ from scipy.linalg import svd
 
 def get_checkpoints(filename):
     checkpoints = []
-    file_model = h5py.File(filename, 'r+')
+    file_model = h5py.File(filename, 'r')
     for file_key in file_model.keys():
         if "update" in file_key:
             chkp = int(file_key.split('_')[1])
@@ -13,7 +13,7 @@ def get_checkpoints(filename):
     return np.sort(checkpoints)
 
 
-def get_eigenvalues_hystory(filename):
+def get_eigenvalues_history(filename):
     f = h5py.File(filename, 'r')
     updates = []
     eigenvalues = []
@@ -32,3 +32,5 @@ def get_eigenvalues_hystory(filename):
     f.close()
             
     return updates, eigenvalues
+
+
