@@ -26,6 +26,8 @@ def create_parser():
     parser.add_argument('--num_chains',         type=int,   default=5000,           help='(Defaults to 5000). Number of parallel chains.')
     parser.add_argument("--alphabet",           type=str,   default="protein",      help="(Defaults to protein). Type of encoding for the sequences. Choose among ['protein', 'rna', 'dna'] or a user-defined string of tokens.")
     parser.add_argument('--restore',                        default=False,          help='(Defaults to False) To restore an old training.', action='store_true')
+    parser.add_argument('--centered',           type=bool,  default=True,           help='(Defaults to True) Use centered gradient')
+    
     parser.add_argument('--spacing',            type=str,   default='exp',          help='(Defaults to exp). Spacing to save models.', choices=['exp', 'linear'])
     parser.add_argument('--seed',               type=int,   default=0,              help='(Defaults to 0). Random seed.')
     return parser
@@ -84,6 +86,7 @@ if __name__ == '__main__':
                 lr=args.lr,
                 batch_size=args.batch_size,
                 gibbs_steps=args.gibbs_steps,
+                centered=args.centered,
                 checkpoints=checkpoints,
                 device=device
             )
