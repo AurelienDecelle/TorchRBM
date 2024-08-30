@@ -128,7 +128,7 @@ def compute_partition_function_ais(
     # Subtract the average for avoiding overflow
     W = -dB * E
     W_ave = W.mean()
-    logZ0 = (num_visibles + num_hiddens) * torch.log(2)
+    logZ0 = num_hiddens * torch.log(torch.tensor(2.0))+ num_visibles * torch.log(torch.tensor(num_states))
     logZ = logZ0 + torch.log(torch.mean(torch.exp(W - W_ave))) + W_ave
     return logZ
 
