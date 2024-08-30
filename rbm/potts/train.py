@@ -24,6 +24,7 @@ def train(
     lr : float,
     batch_size : int,
     gibbs_steps : int,
+    centered : bool,
     checkpoints : list,
     device : torch.device
     ) -> None:
@@ -105,7 +106,7 @@ def train(
                 params=params,
                 gibbs_steps=gibbs_steps,
                 lr=lr,
-                centered=True
+                centered=centered
             )
             
             if upd in checkpoints:
@@ -186,7 +187,7 @@ def restore_training(
                 params=params,
                 gibbs_steps=hyperparams["gibbs_steps"],
                 lr=hyperparams["lr"],
-                centered=True
+                centered=centered
             )
             
             if upd in checkpoints:
