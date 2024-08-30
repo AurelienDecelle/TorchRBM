@@ -17,7 +17,7 @@ def load_params(
     Returns:
         Dict[str, torch.Tensor]: Parameters of the model.
     """
-    file_model = h5py.File(fname, 'r+')
+    file_model = h5py.File(fname, 'r')
     # Automatically selects the last checkpoint if not given
     if not checkpoint:
         chp = 0
@@ -32,11 +32,14 @@ def load_params(
     key_chp = f"update_{chp}"
     
     # Load parameters
+    
     params = {}
     params["weight_matrix"] = torch.tensor(file_model[key_chp]["weight_matrix"][()], device=device)
     params["vbias"] = torch.tensor(file_model[key_chp]["vbias"][()], device=device)
     params["hbias"] = torch.tensor(file_model[key_chp]["hbias"][()], device=device)
+    file_model.close()
     return params
+
 
 
 def load_model(
@@ -66,6 +69,7 @@ def load_model(
     hyperparams["training_mode"] = file_model["hyperparameters"]["training_mode"][()].decode('utf-8')
     hyperparams["num_chains"] = int(file_model["hyperparameters"]["num_chains"][()])
     hyperparams["num_hiddens"] = int(file_model["hyperparameters"]["num_hiddens"][()])
+    
     
     if set_rng_state:
         torch.set_rng_state(torch.tensor(np.array(file_model[last_file_key]['torch_rng_state'])))
