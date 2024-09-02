@@ -95,6 +95,7 @@ if __name__ == '__main__':
                 filename=args.filename,
                 dataset=training_dataset,
                 num_updates=args.num_updates,
+                centered=args.centered,
                 checkpoints=checkpoints,
                 device=device
             )
