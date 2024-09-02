@@ -54,6 +54,7 @@ python rbm/train_rbm.py -h
 - `--num_chains`: (Optional, defaults to 5000) Number of Markov Chains to run in parallel;
 - `--alphabet`: (Optional, defaults to *protein*) Type of encoding for the sequences. Choose among ['protein', 'rna', 'dna'] or a user-defined string of tokens;
 - `--restore`: (Optional) Flag to be used for restarting from an old training;
+- `--centered`: (Optional, defaults to True) Use the centered gradient for the training. 
 - `--spacing`: (Optional, defaults to *exp*) Type of spacing between two checkpoints where the model is stored. The possible choices are: *linear*, *exp*;
 - `--seed`: (Optional, defaults to 0) Random seed.
 
