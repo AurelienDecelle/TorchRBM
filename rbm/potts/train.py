@@ -186,8 +186,7 @@ def restore_training(
                 chains=chains,
                 params=params,
                 gibbs_steps=hyperparams["gibbs_steps"],
-                lr=hyperparams["lr"],
-                centered=centered
+                lr=hyperparams["lr"]
             )
             
             if upd in checkpoints:
