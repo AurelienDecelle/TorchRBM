@@ -8,6 +8,7 @@ def compute_gradient(
     chains: Dict[str, torch.Tensor],
     num_colors : int,
     centered: bool = True,
+    pseudocount: bool= False,
 ) -> Dict[str, torch.Tensor]:
     """Computes the gradient of the log-likelihood. By default implements the centered version of the gradient,
     which normally improveds the quality of the learning.
@@ -22,16 +23,27 @@ def compute_gradient(
         Dict[str, torch.Tensor]: Gradient of the log-likelihood.
     """
     num_chains = len(chains["v"])
-    # One-hot representation of the data
-    v_data_one_hot = one_hot(data["v"], num_classes=num_colors)
+    if pseudocount:
+        device=data["v"].device
+        old_values=data["v"].clone() # to perturbe for the pseudocount
+        Neff=data["weights"].sum()
+        random_probs = torch.rand(data["v"].shape,device=device)
+        change_mask = random_probs < 1./Neff/num_colors
+        new_values = torch.randint(0, num_colors, data["v"].shape,device=device)
+        data_new = torch.where(change_mask,new_values,old_values)
+        v_data_one_hot = one_hot(data_new, num_classes=num_colors)
+
+    else:
+        v_data_one_hot = one_hot(data["v"], num_classes=num_colors)
+
     v_gen_one_hot = one_hot(chains["v"], num_classes=num_colors)
     
     # Averages over data and generated samples
     v_data_mean = (v_data_one_hot * data["weights"].unsqueeze(-1)).sum(0) / data["weights"].sum()
-    torch.clamp_(v_data_mean, min=1e-4, max=(1. - 1e-4))
+    #torch.clamp_(v_data_mean, min=1e-4, max=(1. - 1e-4))
     h_data_mean = (data["mh"] * data["weights"]).sum(0) / data["weights"].sum()
     v_gen_mean = v_gen_one_hot.mean(0)
-    torch.clamp_(v_gen_mean, min=1e-4, max=(1. - 1e-4))
+    #torch.clamp_(v_gen_mean, min=1e-4, max=(1. - 1e-4))
     h_gen_mean = chains["h"].mean(0)
     grad = {}
     
