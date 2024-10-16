@@ -10,7 +10,8 @@ def update_parameters(
     chains : dict[str, torch.Tensor],
     params : dict[str, torch.Tensor],
     lr : float,
-    centered : bool=True
+    centered : bool=True,
+    pseudocount: bool=False
     ) -> Dict[str, torch.Tensor]:
     """Computes the gradient of the log-likelihood and updates the parameters of the model.
 
@@ -41,7 +42,8 @@ def fit_batch(
     params : Dict[str, torch.Tensor],
     gibbs_steps : int,
     lr : float,
-    centered : bool=True
+    centered : bool=True,
+    pseudocount: bool=False
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
     """Takes a batch of data and updates the parameters of the model and the Monte Carlo chains.
 
@@ -64,6 +66,6 @@ def fit_batch(
     chains = sample_state(chains=chains, params=params, gibbs_steps=gibbs_steps)
 
     # Update the parameters
-    params = update_parameters(data=data, chains=chains, params=params, lr=lr, centered=centered)
+    params = update_parameters(data=data, chains=chains, params=params, lr=lr, centered=centered,pseudocount=pseudocount)
     
     return chains, params
