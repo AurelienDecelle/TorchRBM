@@ -1,3 +1,4 @@
+
 #!/usr/bin/python3
 
 import torch
@@ -27,7 +28,7 @@ def create_parser():
     parser.add_argument("--alphabet",           type=str,   default="protein",      help="(Defaults to protein). Type of encoding for the sequences. Choose among ['protein', 'rna', 'dna'] or a user-defined string of tokens.")
     parser.add_argument('--restore',                        default=False,          help='(Defaults to False) To restore an old training.', action='store_true')
     parser.add_argument('--centered',           type=bool,  default=True,           help='(Defaults to True) Use centered gradient')
-    
+    parser.add_argument('--pseudocount',        type=bool,  default=False,          help='(Defaults to False) Use a pseudocount')
     parser.add_argument('--spacing',            type=str,   default='exp',          help='(Defaults to exp). Spacing to save models.', choices=['exp', 'linear'])
     parser.add_argument('--seed',               type=int,   default=0,              help='(Defaults to 0). Random seed.')
     return parser
@@ -67,12 +68,16 @@ if __name__ == '__main__':
         if training_dataset.is_binary:
             Rbm = importlib.import_module("rbm.binary.train")
         else:
+            print("Is Potts")
+            print(args.pseudocount)
             Rbm = importlib.import_module("rbm.potts.train")
+            print(Rbm.__file__)
             
         if args.batch_size > training_dataset.__len__():
             print(f"Warning: batch_size ({args.batch_size}) is bigger than the size of the training set ({training_dataset.__len__()}). Setting batch_size to {training_dataset.__len__()}.")
             args.batch_size = training_dataset.__len__()
             
+        
         if not args.restore:
             np.random.seed(args.seed)
             torch.manual_seed(args.seed)
@@ -87,6 +92,7 @@ if __name__ == '__main__':
                 batch_size=args.batch_size,
                 gibbs_steps=args.gibbs_steps,
                 centered=args.centered,
+                pseudocount=args.pseudocount,
                 checkpoints=checkpoints,
                 device=device
             )
@@ -95,7 +101,8 @@ if __name__ == '__main__':
                 filename=args.filename,
                 dataset=training_dataset,
                 num_updates=args.num_updates,
-                centered=args.centered,
                 checkpoints=checkpoints,
+                centered=args.centered,
+                pseudocount=args.pseudocount,
                 device=device
             )
