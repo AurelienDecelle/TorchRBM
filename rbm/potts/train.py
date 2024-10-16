@@ -25,6 +25,7 @@ def train(
     batch_size : int,
     gibbs_steps : int,
     centered : bool,
+    pseudocount: bool,
     checkpoints : list,
     device : torch.device
     ) -> None:
@@ -106,7 +107,8 @@ def train(
                 params=params,
                 gibbs_steps=gibbs_steps,
                 lr=lr,
-                centered=centered
+                centered=centered,
+                pseudocount=pseudocount
             )
             
             if upd in checkpoints:
@@ -124,6 +126,8 @@ def restore_training(
     dataset : Dataset,
     num_updates : int,
     checkpoints : list,
+    centered : bool,
+    pseudocount: bool,
     device : torch.device):
     """Restores a training from the last saved checkpoint.
 
@@ -186,7 +190,9 @@ def restore_training(
                 chains=chains,
                 params=params,
                 gibbs_steps=hyperparams["gibbs_steps"],
-                lr=hyperparams["lr"]
+                lr=hyperparams["lr"],
+                centered=centered,
+                pseudocount=pseudocount,
             )
             
             if upd in checkpoints:
