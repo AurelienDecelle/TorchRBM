@@ -28,7 +28,8 @@ def compute_gradient(
         old_values=data["v"].clone() # to perturbe for the pseudocount
         Neff=data["weights"].sum()
         random_probs = torch.rand(data["v"].shape,device=device)
-        change_mask = random_probs < 1./Neff/num_colors
+        change_mask = random_probs < 1./Neff
+        
         new_values = torch.randint(0, num_colors, data["v"].shape,device=device)
         data_new = torch.where(change_mask,new_values,old_values)
         v_data_one_hot = one_hot(data_new, num_classes=num_colors)
