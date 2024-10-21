@@ -5,6 +5,7 @@ from rbm.potts.grad import compute_gradient
 from rbm.potts.sampling import sample_hiddens, sample_state
 
 
+
 def update_parameters(
     data : dict[str, torch.Tensor],
     chains : dict[str, torch.Tensor],
@@ -35,8 +36,19 @@ def update_parameters(
     params["weight_matrix"] += lr * grad["weight_matrix"]
     
     # Zero-sum gauge
-    params["weight_matrix"] -= params["weight_matrix"].mean(1, keepdim=True)
+    #params["weight_matrix"] -= params["weight_matrix"].mean(1, keepdim=True)
+
+    A=params["weight_matrix"].mean(1, keepdim=True)
+    bt=params["vbias"].mean(1, keepdim=True)
+    params["weight_matrix"] -=A
+    params["vbias"]-=bt.reshape(-1,1)
+    params["hbias"]+=A.sum(0, keepdim=True).reshape(-1)
+
+
     return params
+
+
+
 
 @torch.jit.script
 def fit_batch(
@@ -69,6 +81,6 @@ def fit_batch(
     chains = sample_state(chains=chains, params=params, gibbs_steps=gibbs_steps)
 
     # Update the parameters
-    params = update_parameters(data=data, chains=chains, params=params, lr=lr, centered=centered,pseudocount=pseudocount)
+    params = update_parameters(data=data, chains=chains, params=params, lr=lr, centered=centered, pseudocount=pseudocount)
     
     return chains, params
